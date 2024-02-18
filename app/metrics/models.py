@@ -5,16 +5,18 @@ from sensors.models import Sensor
 class Measurement(models.Model):
     id = models.IntegerField(primary_key=True)
     vibration = models.FloatField()
-    date = models.DateTimeField()
-    sensor = models.ForeignKey(Sensor, models.DO_NOTHING)
-    machine = models.ForeignKey(Machine, models.DO_NOTHING)
+    date = models.DateTimeField(db_index=True)
+    sensor = models.ForeignKey(Sensor, models.DO_NOTHING, db_index=True)
+    machine = models.ForeignKey(Machine, models.DO_NOTHING, db_index=True)
 
     class Meta:
         ordering = ['date']
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
         indexes = [
-            models.Index(fields=['date'], name='measurement_date_idx')
+            models.Index(fields=['date'], name='measurement_date_idx'),
+            models.Index(fields=['sensor'], name='measurement_sensor_idx'),
+            models.Index(fields=['machine', 'date'], name='measurement_machine_date_idx'),
         ]
 
 class MachineRuntime(models.Model):
