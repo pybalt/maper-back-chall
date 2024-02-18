@@ -24,7 +24,7 @@ provee un CSV con valores de vibración reportado por cada sensor y timestamp.
 funcionamiento por día de cada máquina. Utilice el motor de DB que prefiera.
 - - [x] Diseñar e implementar un algoritmo que mida las horas de funcionamiento de
 la máquina
-- - [ ] Diseñar e implementar con Django una API para que el Frontend pida las
+- - [x] Diseñar e implementar con Django una API para que el Frontend pida las
 horas encendidas de una máquina específica en un día específico.
 
 
