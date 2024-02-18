@@ -43,3 +43,11 @@ la tabla de la DB.
 
     - Diseñar e implementar con Django una API para que el Frontend pida las
 horas encendidas de una máquina específica en un día específico.
+
+# Comandos 
+
+```bash
+
+docker-compose build --no-cache && docker-compose up
+
+```
