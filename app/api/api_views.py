@@ -1,7 +1,9 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from metrics.models import MachineRuntime, Measurement
 from metrics.serializers import MachineRuntimeSerializer, MeasurementSerializer
@@ -39,7 +41,21 @@ def machine_runtime(request):
         except MachineRuntime.DoesNotExist:
             return Response('No data found', status=status.HTTP_404_NOT_FOUND)
 
-@swagger_auto_schema(method='post', request_body=SensorDataRequestSerializer, responses={200: MeasurementSerializer, 404: 'No data found', 400: 'Bad request'})
+class SensorDataPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 3000
+
+page_size_param = openapi.Parameter('page_size', in_=openapi.IN_QUERY, description='Number of results to return per page', type=openapi.TYPE_INTEGER)
+page_param = openapi.Parameter('page', in_=openapi.IN_QUERY, description='Page number', type=openapi.TYPE_INTEGER)
+@swagger_auto_schema(method='post',
+                    request_body=SensorDataRequestSerializer,
+                    responses={
+                        200: MeasurementSerializer,
+                        404: 'No data found',
+                        400: 'Bad request'},
+                    manual_parameters=[page_size_param, page_param],
+                    )
 @api_view(['POST'])
 def sensor_data(request):
     """
@@ -65,8 +81,10 @@ def sensor_data(request):
         end_date = request_serializer.validated_data['end_date']
 
         try:
+            paginator = SensorDataPagination()
             measurements = Measurement.objects.filter(sensor_id__in=sensors, date__range=[start_date, end_date])
-            serializer = MeasurementSerializer(measurements, many=True)
-            return Response(serializer.data, content_type='application/json', status=status.HTTP_200_OK)
+            page = paginator.paginate_queryset(measurements, request)
+            serializer = MeasurementSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Measurement.DoesNotExist:
             return Response('No data found', status=status.HTTP_404_NOT_FOUND)
