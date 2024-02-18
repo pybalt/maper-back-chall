@@ -11,10 +11,10 @@ diseñar software con criterio y escribir código limpio y modular.
 
 - [x] Diseñar una tabla de la DB para almacenar los valores que llegan de los 10000
 sensores, cada 15’.
-- [ ] Diseñar una API que sería implementada con Django para que el Frontend pida mediciones de hasta 16 sensores simultáneamente, por un periodo de tiempo máximo de 1 año.
-- - [ ] Definir el formato del Request y el Response, incluyendo detalle del formato
+- [x] Diseñar una API que sería implementada con Django para que el Frontend pida mediciones de hasta 16 sensores simultáneamente, por un periodo de tiempo máximo de 1 año.
+- - [x] Definir el formato del Request y el Response, incluyendo detalle del formato
 de los datos que serán transmitidos al Frontend.
-- - [ ] Definir columnas y otros parámetros de diseño de la tabla de la DB.
+- - [x] Definir columnas y otros parámetros de diseño de la tabla de la DB.
 - - [ ] Enunciar las consideraciones generales de cómo funcionaría la API ante un GET del Frontend.
 - [x] Se deberá implementar un “horímetro” (medidor de horas de “máquina encendida”).
 Cada máquina monitoreada tiene instalada 4 sensores. Los sensores instalados en

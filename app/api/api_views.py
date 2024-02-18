@@ -1,13 +1,15 @@
+from datetime import date
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 
 from metrics.models import MachineRuntime, Measurement
 from metrics.serializers import MachineRuntimeSerializer, MeasurementSerializer
 from .serializers import MachineRuntimeRequestSerializer, SensorDataRequestSerializer
+from .swagger_params import page_size_param, page_param, sensors_param, start_date_param, end_date_param
+from .pagination import SensorDataPagination
 
 @swagger_auto_schema(method='post', request_body=MachineRuntimeRequestSerializer, responses={200: MachineRuntimeSerializer, 404: 'No data found', 400: 'Bad request'})
 @api_view(['POST'])
@@ -41,22 +43,20 @@ def machine_runtime(request):
         except MachineRuntime.DoesNotExist:
             return Response('No data found', status=status.HTTP_404_NOT_FOUND)
 
-class SensorDataPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 3000
-
-page_size_param = openapi.Parameter('page_size', in_=openapi.IN_QUERY, description='Number of results to return per page', type=openapi.TYPE_INTEGER)
-page_param = openapi.Parameter('page', in_=openapi.IN_QUERY, description='Page number', type=openapi.TYPE_INTEGER)
-@swagger_auto_schema(method='post',
-                    request_body=SensorDataRequestSerializer,
+@swagger_auto_schema(method='get',
                     responses={
-                        200: MeasurementSerializer,
+                        200: MeasurementSerializer(many=True, help_text='List of sensor data'),
                         404: 'No data found',
                         400: 'Bad request'},
-                    manual_parameters=[page_size_param, page_param],
+                    manual_parameters=[
+                        page_size_param,
+                        page_param,
+                        start_date_param,
+                        end_date_param,
+                        sensors_param
+                        ]
                     )
-@api_view(['POST'])
+@api_view(['GET'])
 def sensor_data(request):
     """
     Retrieve sensor data based on the provided parameters.
@@ -71,8 +71,10 @@ def sensor_data(request):
         NotFound: If no data is found for the given parameters.
     """
 
-    request_serializer = SensorDataRequestSerializer(data=request.data)
+    request_serializer = SensorDataRequestSerializer(data=request.query_params)
 
+    request_serializer.sensors = list(map(int, request.query_params.get('sensors').split(',')))
+    
     if not request_serializer.is_valid():
         return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:

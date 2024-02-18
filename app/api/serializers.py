@@ -17,9 +17,16 @@ class MachineRuntimeRequestSerializer(DateBasedSerializer):
         return data
 
 class SensorDataRequestSerializer(DateBasedSerializer):
-    sensors = serializers.ListField(child=serializers.IntegerField(), help_text='List of sensor IDs', default=[3348, 2363, 2371, 3356, 3346])
-    start_date = serializers.DateField(help_text='Start date', default=date(year=2023, month=1, day=30))
-    end_date = serializers.DateField(help_text='End date', default=date(year=2024, month=1, day=30))
+    sensors = serializers.CharField(required=True)
+    start_date = serializers.DateField(required=True)
+    end_date = serializers.DateField(required=True)
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        sensors = data.get('sensors')
+        if sensors:
+            data['sensors'] = list(map(int, sensors.split(',')))
+        return data
 
     def validate_sensors_min_max_length(self, value):
         if not 1 <= len(value) <= 16:
@@ -35,12 +42,9 @@ class SensorDataRequestSerializer(DateBasedSerializer):
         start_date = data.get('start_date')
         end_date = data.get('end_date')
 
-        if not data.get('sensors') or not start_date or not end_date:
-            raise serializers.ValidationError('Sensors, Start Date and End Date are required')
         if start_date > end_date:
             raise serializers.ValidationError('Start date cannot be greater than end date')
         if (end_date - start_date).days > 365:
             raise serializers.ValidationError('Time range cannot exceed 1 year')
 
         return data
-    
