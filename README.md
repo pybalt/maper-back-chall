@@ -51,3 +51,11 @@ horas encendidas de una máquina específica en un día específico.
 docker-compose build --no-cache && docker-compose up
 
 ```
+
+## Servicio de la base de datos
+
+```bash
+psql -h localhost -U postgres -d postgres -W
+```
+
+Se le solicitara el password, la cual tambien es `postgres`
