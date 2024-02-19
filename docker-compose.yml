@@ -12,7 +12,8 @@ services:
 
   back:
     build: .
-    command: ["./app/entrypoint.sh"]
+    working_dir: /app/app
+    command: ["/bin/sh", "-c", "python3 manage.py makemigrations machine metrics sensors && python3 manage.py migrate && python3 manage.py load_data && python3 manage.py populate_machine_runtimes && python3 manage.py runserver 0.0.0.0:8000"]
     volumes:
       - .:/app
     ports:
