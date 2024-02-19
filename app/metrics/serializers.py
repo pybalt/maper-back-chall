@@ -4,12 +4,12 @@ from sensors.models import Sensor
 from machine.models import Machine
 
 class MachineRuntimeSerializer(serializers.ModelSerializer):
-    machine = serializers.IntegerField(help_text='Machine ID')
-    runtime = serializers.IntegerField(help_text='Runtime in hours')
+    machine_id = serializers.IntegerField(help_text='Machine ID')
+    runtime = serializers.FloatField(help_text='Runtime in hours')
 
     class Meta:
         model = MachineRuntime
-        fields = ('machine', 'runtime', 'date')
+        fields = ('machine_id', 'runtime', 'date')
 
 class MeasurementSerializer(serializers.ModelSerializer):
     vibration = serializers.FloatField(help_text='Vibration level')
