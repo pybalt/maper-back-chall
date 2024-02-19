@@ -22,9 +22,7 @@ def __write_runtimes_to_db(runtimes, current_date):
 """
 def is_populated(machine_runtime) -> bool:
     from metrics.models import MachineRuntime
-
     return MachineRuntime.objects.filter(machine=machine_runtime.machine,
-                                         runtime=machine_runtime.runtime,
                                          date=machine_runtime.date).exists()
 
 def __write_runtimes_to_db(array_of_runtimes):
