@@ -3,10 +3,12 @@ from datetime import timedelta
 from django.db.models import QuerySet
 import math
 
+"""
 
 def __write_runtimes_to_db(runtimes, current_date):
     from metrics.models import MachineRuntime
     from machine.models import Machine
+    machine_runtimes = []
     with transaction.atomic():
         for machine, runtime in runtimes.items():
             machine_runtime = MachineRuntime.objects.create(
@@ -14,7 +16,43 @@ def __write_runtimes_to_db(runtimes, current_date):
                 runtime=(runtime.total_seconds()/3600),
                 date=current_date
             )
-            machine_runtime.save()
+            machine_runtimes.append(machine_runtime)
+        MachineRuntime.objects.bulk_create(machine_runtimes)
+
+"""
+def is_populated(machine_runtime) -> bool:
+    from metrics.models import MachineRuntime
+
+    return MachineRuntime.objects.filter(machine=machine_runtime.machine,
+                                         runtime=machine_runtime.runtime,
+                                         date=machine_runtime.date).exists()
+
+def __write_runtimes_to_db(array_of_runtimes):
+    from metrics.models import MachineRuntime
+    from machine.models import Machine
+
+    machine_runtimes = []
+    inserted_objects = None
+    populated = False
+    with transaction.atomic():
+        for runtimes in array_of_runtimes:
+            date = runtimes['date']
+            runtimes = runtimes['runtimes']
+            for machine, runtime in runtimes.items():
+                machine_instance = Machine.objects.get(id=machine)
+                runtime_hours = runtime.total_seconds() / 3600
+                machine_runtime = MachineRuntime(machine=machine_instance, runtime=runtime_hours, date=date)
+                if is_populated(machine_runtime):
+                    print(f'DB already populated')
+                    populated = True
+                    break
+                else:
+                    machine_runtimes.append(machine_runtime)
+            if populated:
+                break
+        if not populated and machine_runtimes:
+            inserted_objects = MachineRuntime.objects.bulk_create(machine_runtimes)
+            print(f'{len(inserted_objects.count())} runtimes were successfully written to the database.')
 
 def calculate_runtimes(average_measurements: QuerySet):
     
@@ -30,8 +68,8 @@ def calculate_runtimes(average_measurements: QuerySet):
     start_up_times = {}
     turn_off_times = {}
     current_date = earliest_date
+    array_of_runtimes = []
     while current_date <= latest_date:
-        print(f'Current date {current_date}...')
 
         measurements = average_measurements.filter(date__date=current_date).order_by('machine', 'date')
         list_measurements = list(measurements)
@@ -60,9 +98,10 @@ def calculate_runtimes(average_measurements: QuerySet):
             if(runtime.total_seconds()/3600 > 24):
                 raise Exception(f'Runtime for machine {machine} is greater than 24 hours.')
 
-        __write_runtimes_to_db(runtimes, current_date)
 
-        print((f'{len(runtimes)} runtimes were successfully written to the database.'))
         current_date += timedelta(days=1)
         
+        array_of_runtimes.append({'date': current_date, 'runtimes': runtimes})
         runtimes = {}
+
+    __write_runtimes_to_db(array_of_runtimes)
