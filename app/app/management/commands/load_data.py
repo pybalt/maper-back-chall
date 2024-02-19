@@ -1,5 +1,4 @@
 import csv
-import os
 from typing import Any
 from datetime import datetime
 from django.core.management import BaseCommand
@@ -18,13 +17,7 @@ class Command(BaseCommand):
         with open('challenge_backend.csv') as file:
             reader = csv.DictReader(file)
             measurements = []
-            checked = False
             for row in reader:
-                if not checked and is_populated(row['id']):
-                    print(f'DB already populated')
-                    break
-                else:
-                    checked = True
                 machine, created = Machine.objects.get_or_create(id=row['machine'])
                 sensor, created = Sensor.objects.get_or_create(id=row['sensor'], machine=machine)
                 measurement = Measurement(
@@ -35,5 +28,7 @@ class Command(BaseCommand):
                     machine=machine
                 )
                 measurements.append(measurement)
-
-                Measurement.objects.bulk_create(measurements)
+                try:
+                    Measurement.objects.bulk_create(measurements)
+                except IntegrityError:
+                    break

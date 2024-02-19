@@ -1,37 +1,14 @@
 from django.db import transaction
 from datetime import timedelta
 from django.db.models import QuerySet
+from django.db.utils import IntegrityError
 import math
-
-"""
-
-def __write_runtimes_to_db(runtimes, current_date):
-    from metrics.models import MachineRuntime
-    from machine.models import Machine
-    machine_runtimes = []
-    with transaction.atomic():
-        for machine, runtime in runtimes.items():
-            machine_runtime = MachineRuntime.objects.create(
-                machine=Machine.objects.get(id=machine),
-                runtime=(runtime.total_seconds()/3600),
-                date=current_date
-            )
-            machine_runtimes.append(machine_runtime)
-        MachineRuntime.objects.bulk_create(machine_runtimes)
-
-"""
-def is_populated(machine_runtime) -> bool:
-    from metrics.models import MachineRuntime
-    return MachineRuntime.objects.filter(machine=machine_runtime.machine,
-                                         date=machine_runtime.date).exists()
 
 def __write_runtimes_to_db(array_of_runtimes):
     from metrics.models import MachineRuntime
     from machine.models import Machine
 
     machine_runtimes = []
-    inserted_objects = None
-    populated = False
     with transaction.atomic():
         for runtimes in array_of_runtimes:
             date = runtimes['date']
@@ -40,17 +17,12 @@ def __write_runtimes_to_db(array_of_runtimes):
                 machine_instance = Machine.objects.get(id=machine)
                 runtime_hours = runtime.total_seconds() / 3600
                 machine_runtime = MachineRuntime(machine=machine_instance, runtime=runtime_hours, date=date)
-                if is_populated(machine_runtime):
-                    print(f'DB already populated')
-                    populated = True
-                    break
-                else:
-                    machine_runtimes.append(machine_runtime)
-            if populated:
-                break
-        if not populated and machine_runtimes:
+                machine_runtimes.append(machine_runtime)
+        try:
             inserted_objects = MachineRuntime.objects.bulk_create(machine_runtimes)
             print(f'{len(inserted_objects.count())} runtimes were successfully written to the database.')
+        except IntegrityError:
+            print('Data already calculated.')
 
 def calculate_runtimes(average_measurements: QuerySet):
     
@@ -95,7 +67,6 @@ def calculate_runtimes(average_measurements: QuerySet):
         for machine, runtime in runtimes.items():
             if(runtime.total_seconds()/3600 > 24):
                 raise Exception(f'Runtime for machine {machine} is greater than 24 hours.')
-
 
         current_date += timedelta(days=1)
         
