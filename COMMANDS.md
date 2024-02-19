@@ -8,6 +8,14 @@ docker-compose build --no-cache && docker-compose up
 
 ```
 
+## Run server
+
+If you need to run the server and you have previously built the images:
+
+```bash
+docker-compose up
+```
+
 ## Database connection
 
 Open Docker postgres service and type on the exec console:
