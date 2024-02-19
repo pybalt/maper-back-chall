@@ -1,6 +1,7 @@
 from django.db import transaction
 from datetime import timedelta
 from django.db.models import QuerySet
+from django.db.utils import IntegrityError
 import math
 
 
@@ -8,13 +9,19 @@ def __write_runtimes_to_db(runtimes, current_date):
     from metrics.models import MachineRuntime
     from machine.models import Machine
     with transaction.atomic():
-        for machine, runtime in runtimes.items():
-            machine_runtime = MachineRuntime.objects.create(
-                machine=Machine.objects.get(id=machine),
-                runtime=(runtime.total_seconds()/3600),
-                date=current_date
-            )
-            machine_runtime.save()
+        try:
+            for machine, runtime in runtimes.items():
+                machine_runtime = MachineRuntime.objects.create(
+                    machine=Machine.objects.get(id=machine),
+                    runtime=(runtime.total_seconds()/3600),
+                    date=current_date
+                )
+                machine_runtime.save()
+        except IntegrityError as e:
+            """Data is already loaded."""
+            return
+        except Exception as e:
+            raise e
 
 def calculate_runtimes(average_measurements: QuerySet):
     
@@ -62,7 +69,6 @@ def calculate_runtimes(average_measurements: QuerySet):
 
         __write_runtimes_to_db(runtimes, current_date)
 
-        print((f'{len(runtimes)} runtimes were successfully written to the database.'))
         current_date += timedelta(days=1)
         
         runtimes = {}
