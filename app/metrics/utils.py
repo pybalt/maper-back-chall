@@ -1,7 +1,6 @@
 from django.db import transaction
 from datetime import timedelta
 from django.db.models import QuerySet
-from django.db.utils import IntegrityError
 import math
 
 
