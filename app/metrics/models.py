@@ -14,9 +14,7 @@ class Measurement(models.Model):
         verbose_name = 'Measurement'
         verbose_name_plural = 'Measurements'
         indexes = [
-            models.Index(fields=['date'], name='measurement_date_idx'),
-            models.Index(fields=['sensor'], name='measurement_sensor_idx'),
-            models.Index(fields=['machine', 'date'], name='measurement_machine_date_idx'),
+            models.Index(fields=['sensor', 'date'], name='measurement_machine_date_idx'),
         ]
 
 class MachineRuntime(models.Model):
